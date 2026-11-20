@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#173b3f" />
+  <meta name="description" content="En fokuserad att göra-app för uppgifter och deras nästa steg." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Klart" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Klart — Att göra</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Hoppa till innehållet</a>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Huvudnavigering">
+      <div class="brand" aria-label="Klart">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" role="img"><path d="M12.5 25.5 20 33l16-18" /></svg>
+        </span>
+        <span>Klart<span class="brand-dot">.</span></span>
+      </div>
+
+      <nav class="nav-list" aria-label="Vyer">
+        <button class="nav-item active" data-view="active" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h10M4 17.5h7" /></svg>
+          </span>
+          På gång
+          <span id="activeCount" class="nav-count">0</span>
+        </button>
+        <button class="nav-item" data-view="history" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 7v5l3.5 2M4.9 5.2A9 9 0 1 1 3 12" /><path d="M3 5v5h5" /></svg>
+          </span>
+          Historik
+          <span id="historyCount" class="nav-count">0</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+      <div class="offline-note" id="connectionStatus">
+        <span class="status-dot"></span>
+        <span>Redo offline</span>
+      </div>
+      <button id="installButton" class="install-button" type="button" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 20h14" /></svg>
+        Installera appen
+      </button>
+      <p class="storage-note">Allt sparas lokalt på din enhet.</p>
+    </aside>
+
+    <main id="main" class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="viewEyebrow">DIN ÖVERSIKT</p>
+          <h1 id="viewTitle">Vad vill du få gjort?</h1>
+        </div>
+        <div class="date-chip" id="todayLabel" aria-label="Dagens datum"></div>
+      </header>
+
+      <section id="activeView" class="view-panel" aria-labelledby="viewTitle">
+        <form id="taskForm" class="quick-add">
+          <label class="sr-only" for="taskTitle">Ny sak att göra</label>
+          <div class="add-symbol" aria-hidden="true">+</div>
+          <input id="taskTitle" name="taskTitle" maxlength="120" autocomplete="off" placeholder="Skriv något du vill få gjort…" required />
+          <button type="submit">Lägg till</button>
+        </form>
+
+        <div class="summary-row" aria-label="Sammanfattning">
+          <div class="summary-copy">
+            <strong id="summaryPrimary">Inget på listan</strong>
+            <span id="summarySecondary">Lägg till din första sak ovan.</span>
+          </div>
+          <div class="progress-ring" id="overallRing" aria-label="0 procent av alla actions klara">
+            <span id="overallPercent">0%</span>
+          </div>
+        </div>
+
+        <div class="section-heading">
+          <h2>På gång</h2>
+          <span id="taskListMeta">0 saker</span>
+        </div>
+        <div id="taskList" class="task-list" aria-live="polite"></div>
+      </section>
+
+      <section id="historyView" class="view-panel" aria-labelledby="viewTitle" hidden>
+        <div class="history-hero">
+          <div class="history-icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="m8 17 5 5 11-12" /></svg>
+          </div>
+          <div>
+            <h2>Avklarat är värt att minnas.</h2>
+            <p>Här samlas allt du har rott i mål, sorterat efter när det blev klart.</p>
+          </div>
+        </div>
+        <div id="historyList" class="history-list" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="taskDialog" class="task-dialog">
+    <div class="dialog-frame">
+      <header class="dialog-header">
+        <div>
+          <p class="eyebrow">SAK ATT GÖRA</p>
+          <h2 id="dialogTitle" contenteditable="true" spellcheck="true"></h2>
+        </div>
+        <button id="closeDialog" class="icon-button" type="button" aria-label="Stäng">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+      </header>
+
+      <div class="dialog-body">
+        <div class="detail-meta">
+          <span id="createdLabel"></span>
+          <span class="detail-progress"><strong id="actionProgressText">0 av 0</strong> actions klara</span>
+        </div>
+
+        <div class="detail-progress-bar" aria-hidden="true"><span id="detailProgressFill"></span></div>
+
+        <section class="actions-section" aria-labelledby="actionsHeading">
+          <div class="section-heading compact">
+            <h3 id="actionsHeading">Actions</h3>
+            <span id="actionsCount">0 totalt</span>
+          </div>
+          <form id="actionForm" class="action-add-form">
+            <div class="action-input-wrap">
+              <label class="sr-only" for="actionTitle">Ny action</label>
+              <input id="actionTitle" maxlength="140" autocomplete="off" placeholder="Vad är nästa steg?" required />
+            </div>
+            <div class="date-input-wrap">
+              <label for="actionDate">Datum</label>
+              <input id="actionDate" type="date" required />
+            </div>
+            <button type="submit" aria-label="Lägg till action">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            </button>
+          </form>
+          <div id="actionList" class="action-list"></div>
+        </section>
+      </div>
+
+      <footer class="dialog-footer">
+        <button id="deleteTask" class="text-button danger" type="button">Ta bort</button>
+        <div class="completion-wrap">
+          <span id="completionHint">Lägg till minst en action</span>
+          <button id="completeTask" class="complete-button" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+            Markera saken som färdig
+          </button>
+        </div>
+      </footer>
+    </div>
+  </dialog>
+
+  <dialog id="historyDialog" class="task-dialog history-dialog">
+    <div class="dialog-frame">
+      <header class="dialog-header">
+        <div>
+          <p class="eyebrow">FÄRDIG SAK</p>
+          <h2 id="historyDialogTitle"></h2>
+        </div>
+        <button id="closeHistoryDialog" class="icon-button" type="button" aria-label="Stäng">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <p id="historyCompletedLabel" class="history-completed-label"></p>
+        <div id="historyActionList" class="history-action-list"></div>
+      </div>
+      <footer class="dialog-footer">
+        <button id="deleteHistoryTask" class="text-button danger" type="button">Ta bort permanent</button>
+        <button id="restoreTask" class="secondary-button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h11a5 5 0 0 1 0 10h-3M4 9l4-4M4 9l4 4" /></svg>
+          Flytta tillbaka
+        </button>
+      </footer>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js" defer></script>
+</body>
+</html>
